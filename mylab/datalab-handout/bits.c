@@ -181,7 +181,21 @@ EX:
  *   Rating: 4
  */
 int bitCount(int x) {
-  return 2;
+  int _mask1 = 0x55 | (0x55 << 8);
+  int _mask2 = 0x33 | (0x33 << 8);
+  int _mask3 = 0x0F | (0x0F << 8);
+  int mask1 = _mask1 | (_mask1 << 16); //0x55555555
+  int mask2 = _mask2 | (_mask2 << 16); //0x33333333
+  int mask3 = _mask3 | (_mask3 << 16); //0x0f0f0f0f
+  int mask4 = 0xFF | (0xFF << 16); //0x00ff00ff
+  int mask5 = 0xFF | (0xFF << 8); //0x0000ffff
+  int result = 0;
+  result = (x&mask1) + ((x>>1)&mask1);
+  result = (result&mask2) + ((result>>2)&mask2);
+  result = (result&mask3) + ((result>>4)&mask3);
+  result = (result&mask4) + ((result>>8)&mask4);
+  result = (result&mask5) + ((result>>16)&mask5);
+  return result;
 }
 /* 
  * bang - Compute !x without using !
@@ -191,7 +205,12 @@ int bitCount(int x) {
  *   Rating: 4 
  */
 int bang(int x) {
-  return 2;
+  x = (x>>16) | x;
+  x = (x>>8) | x;
+  x = (x>>4) | x;
+  x = (x>>2) | x;
+  x = (x>>1) | x;
+  return ~x&0x1;
 }
 /* 
  * tmin - return minimum two's complement integer 
@@ -200,7 +219,7 @@ int bang(int x) {
  *   Rating: 1
  */
 int tmin(void) {
-  return 2;
+  return 0x1<<31;
 }
 /* 
  * fitsBits - return 1 if x can be represented as an 
@@ -212,7 +231,9 @@ int tmin(void) {
  *   Rating: 2
  */
 int fitsBits(int x, int n) {
-  return 2;
+  int c = 33+~n;
+  int t = (x<<c)>>c;
+  return !(x^t);
 }
 /* 
  * divpwr2 - Compute x/(2^n), for 0 <= n <= 30
@@ -223,7 +244,10 @@ int fitsBits(int x, int n) {
  *   Rating: 2
  */
 int divpwr2(int x, int n) {
-    return 2;
+  int sign = x>>31;
+  int bias = (0x1<<n)+~0;
+  x = x + (bias&sign);
+  return x>>n;
 }
 /* 
  * negate - return -x 
@@ -233,7 +257,7 @@ int divpwr2(int x, int n) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  return ~x+1;
 }
 /* 
  * isPositive - return 1 if x > 0, return 0 otherwise 
