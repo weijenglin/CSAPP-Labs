@@ -267,7 +267,7 @@ int negate(int x) {
  *   Rating: 3
  */
 int isPositive(int x) {
-  return 2;
+  return !(!x)&!((x>>31)&(0x1));
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -277,7 +277,10 @@ int isPositive(int x) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+  int sign_x = (x>>31);
+  int sign_y = (y>>31);
+  int val = !!((x+~y)>>31); // x+~=y == x-y-1. x-y-1 <= 0 means x <= y
+  return (!!sign_x|!sign_y)&((!!sign_x&!sign_y)|(val)); // (!!sign_x == 0) if sign_x = 0 (positive)
 }
 /*
  * ilog2 - return floor(log base 2 of x), where x > 0
@@ -287,7 +290,13 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4
  */
 int ilog2(int x) {
-  return 2;
+  int ans = 0;
+  ans = (!!(x>>16))<<4;
+  ans = ans+((!!(x>>(8+ans)))<<3);
+  ans = ans+((!!(x>>(4+ans)))<<2);
+  ans = ans+((!!(x>>(2+ans)))<<1);
+  ans = ans+((!!(x>>(1+ans)))<<0);
+  return ans;
 }
 /* 
  * float_neg - Return bit-level equivalent of expression -f for
@@ -301,7 +310,14 @@ int ilog2(int x) {
  *   Rating: 2
  */
 unsigned float_neg(unsigned uf) {
- return 2;
+ unsigned x = 0x80000000;
+ unsigned wu = 0xFF000000;
+ unsigned tmp = uf<<1;
+ if ((wu&tmp) == wu) {
+     if (tmp != wu) //NaN
+        return uf;
+ }
+ return uf^x;
 }
 /* 
  * float_i2f - Return bit-level equivalent of expression (float) x
@@ -313,6 +329,16 @@ unsigned float_neg(unsigned uf) {
  *   Rating: 4
  */
 unsigned float_i2f(int x) {
+  unsigned ans = 0;
+  int tmpx = x;
+  int E = 0;
+  
+  // x == 0
+  if (x == 0)
+      return 0;
+  // min value (-1)*2^31, exp=158 (E=exp-127), E=31, M=1, f=0
+  if (x == 0x80000000)
+      return 0xcf000000;
   return 2;
 }
 /* 
