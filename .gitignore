@@ -90,3 +90,6 @@ tramp
 
 # sftp configuration file
 sftp-config.json
+
+#vscode
+.vscode/
