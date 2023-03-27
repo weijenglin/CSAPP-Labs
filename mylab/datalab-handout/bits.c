@@ -314,7 +314,7 @@ unsigned float_neg(unsigned uf) {
  unsigned wu = 0xFF000000;
  unsigned tmp = uf<<1;
  if ((wu&tmp) == wu) {
-     if (tmp != wu) //NaN
+      if (tmp != wu) //NaN
         return uf;
  }
  return uf^x;
@@ -330,16 +330,49 @@ unsigned float_neg(unsigned uf) {
  */
 unsigned float_i2f(int x) {
   unsigned ans = 0;
-  int tmpx = x;
+  int tempx = 0;
   int E = 0;
+  int sign = x&0x80000000;
+  int tail = 0;
+  int f = 0;
+  int delta = 0;
   
   // x == 0
   if (x == 0)
-      return 0;
+    return 0;
   // min value (-1)*2^31, exp=158 (E=exp-127), E=31, M=1, f=0
   if (x == 0x80000000)
-      return 0xcf000000;
-  return 2;
+    return 0xcf000000;
+  
+  if (sign)
+    x = -x;
+
+  tempx = x;
+  while ((tempx>>E)) //count number of E
+  {
+    E++;
+  }
+  E = E - 1;
+
+  // e.g. 12345.0: 11000000111001, E=13
+  tempx = tempx << (31-E);//tempx = 1100 0000 1110 0100 0000 0000 0000 0000 
+  tail = (tempx >> 8)&0x007fffff; // shift 8-bit right for exp, now tail is 10000001110010000000000
+
+  /* Determine if it's necessary to increase fraction by 1
+   * If greater than 0.5, increment;
+   * equals to 0.5 and the last bit is 1, increment, round up to even
+   */
+  f = tempx&0xff;
+  delta = (f>128) || ((f==128) && (tail&0x01));
+  tail += delta;
+  E = E+127;
+  while (tail >> 23)
+  {
+    tail = tail&0x007fffff;
+    E = E+1;
+  }
+  ans = sign | E<<23 | tail;
+  return ans;
 }
 /* 
  * float_twice - Return bit-level equivalent of expression 2*f for
