@@ -386,5 +386,24 @@ unsigned float_i2f(int x) {
  *   Rating: 4
  */
 unsigned float_twice(unsigned uf) {
-  return 2;
+  int tmp = uf;
+  int sign = uf&0x80000000;
+  int exp = uf&0x7f800000; // 8-bit mask
+  int frac = uf&0x7fffff; // 23-bit mask
+  tmp=tmp&0x7fffffff; /* remove sign */
+  // denormalized
+  if ((tmp>>23) == 0x0) {
+    tmp = tmp<<1 | sign;
+    return tmp;
+  } else if ((tmp>>23) == 0xff) { //NaN
+    return uf;
+  } else {
+    if ((exp>>23)+1 == 0xff) { //Infinity
+      return sign|0x7f800000;
+    } else { //normalized
+      return sign|(((exp>>23)+1)<<23)|frac;
+    }
+  }
+
+  return tmp;
 }
